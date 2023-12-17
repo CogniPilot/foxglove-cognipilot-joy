@@ -21,6 +21,7 @@ type Config = {
 };
 
 var joyButtons = Array(8);
+var pubCount = 0;
 joyButtons = [0, 0, 0, 0, 0, 0, 0, 0];
 var joyAxes = Array(4);
 joyAxes = [0, 0, 0, 0];
@@ -136,7 +137,12 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     message.axes = joyAxes;
     message.buttons = joyButtons;
     context.publish?.(currentTopic, message);
-    joyButtons = [0,0,0,0,0,0,0,0];
+    if (pubCount == 5) {
+      joyButtons = [0,0,0,0,0,0,0,0];
+      pubCount = 0;
+    } else {
+      pubCount = pubCount + 1;
+    }
   }
 
   let manager: nipplejs.JoystickManager;
@@ -225,14 +231,14 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
           style={{...joyStyles.button, ...joyStyles.green}}
           onClick={() => {
             joyButtons[0]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Manual</button>
         <button 
           style={{...joyStyles.button, ...joyStyles.red}}
           onClick={() => {
             joyButtons[1]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Auto</button>
       </div>
@@ -241,14 +247,14 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
           style={{...joyStyles.button, ...joyStyles.blue}}
           onClick={() => {
             joyButtons[2]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >cmd_vel</button>
         <button 
           style={{...joyStyles.button, ...joyStyles.yellow}}
           onClick={() => {
             joyButtons[3]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Calibration</button>
       </div>
@@ -257,14 +263,14 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
           style={{...joyStyles.button, ...joyStyles.red}}
           onClick={() => {
             joyButtons[7]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Arm</button>
         <button 
           style={{...joyStyles.button, ...joyStyles.green}}
           onClick={() => {
             joyButtons[6]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Disarm</button>
       </div>
@@ -274,14 +280,14 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
 
           onClick={() => {
             joyButtons[4]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Lights Off</button>
         <button 
           style={{...joyStyles.button, ...joyStyles.white}}
           onClick={() => {
             joyButtons[5]=1;
-            cmdJoy();
+            pubCount=0;
           }}
         >Lights On</button>
       </div>
