@@ -170,13 +170,13 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     })
     manager.on('move', (evt, data) => {
       console.log(evt)
-      joyAxes[1]=(startPoint.y - data.position.y) / 100.0;
-      joyAxes[3]=(startPoint.x - data.position.x) / 100.0;
+      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
     })
     manager.on('end', (evt, data) => {
       console.log(evt)
-      joyAxes[1]=(startPoint.y - data.position.y) / 100.0;
-      joyAxes[3]=(startPoint.x - data.position.x) / 100.0;
+      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
     })
     timer
   }
