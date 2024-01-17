@@ -7,6 +7,7 @@ import ReactDOM from "react-dom";
 import { JoystickManagerOptions, Position } from 'nipplejs';
 import nipplejs from 'nipplejs';
 import { set } from 'lodash';
+import Gamepad from 'react-gamepad'
 
 type PanelState = {
   outmsg?: string;
@@ -181,6 +182,21 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     timer
   }
 
+
+  const handleGamepadButtonChange = (buttonName: string, down: boolean) => {
+    console.log(`Button ${buttonName} ${down ? 'pressed' : 'released'}`);
+  };
+  
+  const handleGamepadAxisChange = (axisName: string, value: number) => {
+    console.log(`Axis ${axisName} value: ${value}`);
+    if (axisName == "LeftStickX") {
+      joyAxes[3] = -value;
+    }
+    if (axisName == "LeftStickY") {
+      joyAxes[1] = value;
+    }
+  };
+
   useEffect(() => {
     const tree = buildSettingsTree(config, topics);
     context.updatePanelSettingsEditor({
@@ -221,78 +237,86 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
   }, [renderDone]);
 
   return (
-    <div style={{ padding: "1rem" }}>
-      {/* <h2>nipple test</h2> */}
+    <Gamepad
+      onConnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} connected`)}
+      onDisconnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} disconnected`)}
+      onButtonChange={(buttonName, down) => handleGamepadButtonChange(buttonName, down)}
+      onAxisChange={(axisName, value) => handleGamepadAxisChange(axisName, value)}
+      deadZone={0.2}
+    >{
+      <div style={{ padding: "1rem" }}>
+        {/* <h2>nipple test</h2> */}
 
-      <div id="nipple_zone"></div>
+        <div id="nipple_zone"></div>
 
-      <div style={joyStyles.box}>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.green}}
-          onClick={() => {
-            joyButtons[0]=1;
-            pubCount=0;
-          }}
-        >Manual</button>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.red}}
-          onClick={() => {
-            joyButtons[1]=1;
-            pubCount=0;
-          }}
-        >Auto</button>
-      </div>
-      <div style={joyStyles.box}>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.blue}}
-          onClick={() => {
-            joyButtons[2]=1;
-            pubCount=0;
-          }}
-        >cmd_vel</button>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.yellow}}
-          onClick={() => {
-            joyButtons[3]=1;
-            pubCount=0;
-          }}
-        >Calibration</button>
-      </div>
-      <div style={joyStyles.box}>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.red}}
-          onClick={() => {
-            joyButtons[7]=1;
-            pubCount=0;
-          }}
-        >Arm</button>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.green}}
-          onClick={() => {
-            joyButtons[6]=1;
-            pubCount=0;
-          }}
-        >Disarm</button>
-      </div>
-      <div style={joyStyles.box}>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.black}}
+        <div style={joyStyles.box}>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.green}}
+            onClick={() => {
+              joyButtons[0]=1;
+              pubCount=0;
+            }}
+          >Manual</button>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.red}}
+            onClick={() => {
+              joyButtons[1]=1;
+              pubCount=0;
+            }}
+          >Auto</button>
+        </div>
+        <div style={joyStyles.box}>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.blue}}
+            onClick={() => {
+              joyButtons[2]=1;
+              pubCount=0;
+            }}
+          >cmd_vel</button>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.yellow}}
+            onClick={() => {
+              joyButtons[3]=1;
+              pubCount=0;
+            }}
+          >Calibration</button>
+        </div>
+        <div style={joyStyles.box}>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.red}}
+            onClick={() => {
+              joyButtons[7]=1;
+              pubCount=0;
+            }}
+          >Arm</button>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.green}}
+            onClick={() => {
+              joyButtons[6]=1;
+              pubCount=0;
+            }}
+          >Disarm</button>
+        </div>
+        <div style={joyStyles.box}>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.black}}
 
-          onClick={() => {
-            joyButtons[4]=1;
-            pubCount=0;
-          }}
-        >Lights Off</button>
-        <button 
-          style={{...joyStyles.button, ...joyStyles.white}}
-          onClick={() => {
-            joyButtons[5]=1;
-            pubCount=0;
-          }}
-        >Lights On</button>
+            onClick={() => {
+              joyButtons[4]=1;
+              pubCount=0;
+            }}
+          >Lights Off</button>
+          <button 
+            style={{...joyStyles.button, ...joyStyles.white}}
+            onClick={() => {
+              joyButtons[5]=1;
+              pubCount=0;
+            }}
+          >Lights On</button>
+        </div>
+        <div>{state.outmsg}</div>
       </div>
-      <div>{state.outmsg}</div>
-    </div>
+    }</Gamepad>
   );
 }
 
