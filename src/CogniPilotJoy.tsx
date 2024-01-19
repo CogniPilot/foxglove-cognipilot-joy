@@ -182,9 +182,33 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     timer
   }
 
-
-  const handleGamepadButtonChange = (buttonName: string, down: boolean) => {
-    console.log(`Button ${buttonName} ${down ? 'pressed' : 'released'}`);
+  const handleGamepadButtonDown = (buttonName: string) => {
+    if (buttonName == 'A') {
+      joyButtons[0] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'B') {
+      joyButtons[1] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'X') {
+      joyButtons[2] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'Y') {
+      joyButtons[3] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'LB') {
+      joyButtons[7] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'RB') {
+      joyButtons[6] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'LT') {
+      joyButtons[4] = 1;
+      pubCount = 0;
+    } else if (buttonName == 'RT') {
+      joyButtons[5] = 1;
+      pubCount = 0;
+    }
+    console.log(`Button ${buttonName} Pressed`);
   };
   
   const handleGamepadAxisChange = (axisName: string, value: number) => {
@@ -240,7 +264,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     <Gamepad
       onConnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} connected`)}
       onDisconnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} disconnected`)}
-      onButtonChange={(buttonName, down) => handleGamepadButtonChange(buttonName, down)}
+      onButtonChange={(buttonName) => handleGamepadButtonDown(buttonName)}
       onAxisChange={(axisName, value) => handleGamepadAxisChange(axisName, value)}
       deadZone={0.2}
     >{
