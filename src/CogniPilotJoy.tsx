@@ -214,10 +214,16 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
   const handleGamepadAxisChange = (axisName: string, value: number) => {
     console.log(`Axis ${axisName} value: ${value}`);
     if (axisName == "LeftStickX") {
-      joyAxes[3] = -value;
+      joyAxes[4] = -value;
     }
     if (axisName == "LeftStickY") {
       joyAxes[1] = value;
+    }
+    if (axisName == "RightStickX") {
+      joyAxes[3] = -value;
+    }
+    if (axisName == "RightStickY") {
+      joyAxes[2] = value;
     }
   };
 
