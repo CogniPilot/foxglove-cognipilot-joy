@@ -146,10 +146,10 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     }
   }
 
-  let manager: nipplejs.JoystickManager;
-  let init_nipple = (colorScheme: string) => {
+  let managerLeft: nipplejs.JoystickManager;
+  let init_left_nipple = (colorScheme: string) => {
     let options: JoystickManagerOptions = {
-      zone: document.getElementById('nipple_zone') as HTMLDivElement,
+      zone: document.getElementById('nipple_zone_left') as HTMLDivElement,
       color: (colorScheme === 'light' ? 'black' : 'white'),
       size: 100,
 
@@ -157,26 +157,62 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
       mode: 'static',
 
       dynamicPage: true,
-      position: { left: '50%', top: '60%' },
+      position: { left: '25%', top: '60%' },
     };
     timer = setInterval(() => {
         cmdJoy()
       }, 200)
-    manager = nipplejs.create(options);
-    manager.on('start', (evt, data) => {
+    managerLeft = nipplejs.create(options);
+    managerLeft.on('start', (evt, data) => {
       console.log(evt)
       console.log('start')
       console.log(data.position)
       startPoint = data.position
     })
-    manager.on('move', (evt, data) => {
+    managerLeft.on('move', (evt, data) => {
       console.log(evt)
       joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[4]=2.0*(startPoint.x - data.position.x) / 100.0;
+    })
+    managerLeft.on('end', (evt, data) => {
+      console.log(evt)
+      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[4]=2.0*(startPoint.x - data.position.x) / 100.0;
+    })
+    timer
+  }
+
+  let managerRight: nipplejs.JoystickManager;
+  let init_right_nipple = (colorScheme: string) => {
+    let options: JoystickManagerOptions = {
+      zone: document.getElementById('nipple_zone_right') as HTMLDivElement,
+      color: (colorScheme === 'light' ? 'black' : 'white'),
+      size: 100,
+
+      restOpacity: 0.8,
+      mode: 'static',
+
+      dynamicPage: true,
+      position: { right: '25%', top: '60%' },
+    };
+    timer = setInterval(() => {
+        cmdJoy()
+      }, 200)
+    managerRight = nipplejs.create(options);
+    managerRight.on('start', (evt, data) => {
+      console.log(evt)
+      console.log('start')
+      console.log(data.position)
+      startPoint = data.position
+    })
+    managerRight.on('move', (evt, data) => {
+      console.log(evt)
+      joyAxes[2]=2.0*(startPoint.y - data.position.y) / 100.0;
       joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
     })
-    manager.on('end', (evt, data) => {
+    managerRight.on('end', (evt, data) => {
       console.log(evt)
-      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[2]=2.0*(startPoint.y - data.position.y) / 100.0;
       joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
     })
     timer
@@ -244,8 +280,10 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
         setColorScheme(renderState.colorScheme);
         if (renderState.colorScheme !== CURRENT_SCHEME) {
           CURRENT_SCHEME = renderState.colorScheme
-          manager.destroy();
-          init_nipple(renderState.colorScheme);
+          managerLeft.destroy();
+          managerRight.destroy();
+          init_left_nipple(renderState.colorScheme);
+          init_right_nipple(renderState.colorScheme);
         }
       }
     };
@@ -258,7 +296,8 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     if (CURRENT_SCHEME === '') {
       CURRENT_SCHEME = colorScheme
     }
-    init_nipple(CURRENT_SCHEME);
+    init_left_nipple(CURRENT_SCHEME);
+    init_right_nipple(CURRENT_SCHEME);
 
 
   }, [context]);
@@ -277,7 +316,8 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
       <div style={{ padding: "1rem" }}>
         {/* <h2>nipple test</h2> */}
 
-        <div id="nipple_zone"></div>
+        <div id="nipple_zone_left"></div>
+        <div id="nipple_zone_right"></div>
 
         <div style={joyStyles.box}>
           <button 
@@ -302,7 +342,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
               joyButtons[2]=1;
               pubCount=0;
             }}
-          >cmd_vel</button>
+          >Auto Level</button>
           <button 
             style={{...joyStyles.button, ...joyStyles.yellow}}
             onClick={() => {
