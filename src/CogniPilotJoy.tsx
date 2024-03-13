@@ -8,6 +8,7 @@ import { JoystickManagerOptions, Position } from 'nipplejs';
 import nipplejs from 'nipplejs';
 import { set } from 'lodash';
 import Gamepad from 'react-gamepad'
+import { CSSProperties } from "react";
 
 type PanelState = {
   outmsg?: string;
@@ -30,12 +31,21 @@ var message = {
   axes: joyAxes,
   buttons: joyButtons,
 };
+var left_axis = 3;
 
 const joyStyles = {
   box: {
     display: "flex",
     "flex-direction": "row",
     "justify-content": "space-between",
+    "align-items": "center",
+    width: "100%",
+    height: "100%",
+    margin: "10px",
+  },
+  switch: {
+    display: "flex",
+    "flex-direction": "row-reverse",
     "align-items": "center",
     width: "100%",
     height: "100%",
@@ -102,6 +112,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
   const [state, setState] = useState<PanelState>(() => {
     return context.initialState as PanelState;
   });
+  const [drone_mode, setMode] = useState<boolean>(false);
 
   const [config, setConfig] = useState<Config>(() => {
     const partialConfig = context.initialState as Config;
@@ -130,7 +141,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
       return newConfig;
     });
   }, []);
-
+  
   let startPoint: Position;
   let timer: ReturnType<typeof setInterval> | undefined;;
 
@@ -146,6 +157,42 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     }
   }
 
+  let manager: nipplejs.JoystickManager;
+  let init_nipple = (colorScheme: string) => {
+    let options: JoystickManagerOptions = {
+      zone: document.getElementById('nipple_zone') as HTMLDivElement,
+      color: (colorScheme === 'light' ? 'black' : 'white'),
+      size: 100,
+
+      restOpacity: 0.8,
+      mode: 'static',
+
+      dynamicPage: true,
+      position: { left: "50%", top: '490px' },
+    };
+    timer = setInterval(() => {
+        cmdJoy()
+      }, 200)
+    manager = nipplejs.create(options);
+    manager.on('start', (evt, data) => {
+      console.log(evt)
+      console.log('start')
+      console.log(data.position)
+      startPoint = data.position;
+    })
+    manager.on('move', (evt, data) => {
+      console.log(evt)
+      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
+    })
+    manager.on('end', (evt, data) => {
+      console.log(evt)
+      joyAxes[1]=2.0*(startPoint.y - data.position.y) / 100.0;
+      joyAxes[3]=2.0*(startPoint.x - data.position.x) / 100.0;
+    })
+    timer
+  }
+
   let managerLeft: nipplejs.JoystickManager;
   let init_left_nipple = (colorScheme: string) => {
     let options: JoystickManagerOptions = {
@@ -157,7 +204,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
       mode: 'static',
 
       dynamicPage: true,
-      position: { left: '25%', top: '60%' },
+      position: { left: "85px", top: '490px' },
     };
     timer = setInterval(() => {
         cmdJoy()
@@ -193,7 +240,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
       mode: 'static',
 
       dynamicPage: true,
-      position: { right: '25%', top: '60%' },
+      position: { right: '65px', top: '490px' },
     };
     timer = setInterval(() => {
         cmdJoy()
@@ -243,6 +290,8 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
     } else if (buttonName == 'RT') {
       joyButtons[5] = 1;
       pubCount = 0;
+    } else if (buttonName == 'Start') {
+      toggleMode();
     }
     console.log(`Button ${buttonName} Pressed`);
   };
@@ -250,72 +299,129 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
   const handleGamepadAxisChange = (axisName: string, value: number) => {
     console.log(`Axis ${axisName} value: ${value}`);
     if (axisName == "LeftStickX") {
-      joyAxes[4] = -value;
+      joyAxes[left_axis] = -value;
     }
     if (axisName == "LeftStickY") {
       joyAxes[1] = value;
     }
-    if (axisName == "RightStickX") {
+    if (drone_mode && axisName == "RightStickX") {
       joyAxes[3] = -value;
     }
-    if (axisName == "RightStickY") {
+    if (drone_mode && axisName == "RightStickY") {
       joyAxes[2] = value;
     }
   };
 
-  useEffect(() => {
-    const tree = buildSettingsTree(config, topics);
-    context.updatePanelSettingsEditor({
-      actionHandler: settingsActionHandler,
-      nodes: tree,
-    });
-    saveState(config);
-  }, [config, context, saveState, settingsActionHandler, topics]);
+    useEffect(() => {
+      const tree = buildSettingsTree(config, topics);
+      context.updatePanelSettingsEditor({
+        actionHandler: settingsActionHandler,
+        nodes: tree,
+      });
+      saveState(config);
+    }, [config, context, saveState, settingsActionHandler, topics]);
 
-  useLayoutEffect(() => {
-    context.onRender = (renderState: RenderState, done) => {
-      setRenderDone(() => done);
-      setTopics(renderState.topics ?? []);
-      if (renderState.colorScheme) {
-        setColorScheme(renderState.colorScheme);
-        if (renderState.colorScheme !== CURRENT_SCHEME) {
-          CURRENT_SCHEME = renderState.colorScheme
-          managerLeft.destroy();
-          managerRight.destroy();
-          init_left_nipple(renderState.colorScheme);
-          init_right_nipple(renderState.colorScheme);
+    useLayoutEffect(() => {
+      context.onRender = (renderState: RenderState, done) => {
+        setRenderDone(() => done);
+        setTopics(renderState.topics ?? []);
+        if (renderState.colorScheme) {
+          if (renderState.colorScheme !== CURRENT_SCHEME) {
+            CURRENT_SCHEME = renderState.colorScheme
+            manager.destroy();
+            managerLeft.destroy();
+            managerRight.destroy();
+            document.getElementById('nipple_zone')!.style.display = "block";
+            document.getElementById('nipple_zone_left')!.style.display = "block";
+            document.getElementById('nipple_zone_right')!.style.display = "block";
+            init_nipple(renderState.colorScheme);
+            init_left_nipple(renderState.colorScheme);
+            init_right_nipple(renderState.colorScheme);
+          }
+          setColorScheme(renderState.colorScheme);
         }
+      };
+      context.watch("topics");
+  
+      context.advertise?.(currentTopic, "sensor_msgs/Joy");
+  
+      context.watch("colorScheme");
+  
+      if (CURRENT_SCHEME === '') {
+        CURRENT_SCHEME = colorScheme
       }
+      init_nipple(CURRENT_SCHEME);
+      init_left_nipple(CURRENT_SCHEME);
+      init_right_nipple(CURRENT_SCHEME);
+
+      document.getElementById('nipple_zone_left')!.style.display = "none";
+      document.getElementById('nipple_zone_right')!.style.display = "none";
+
+    }, [context]);
+    useEffect(() => {
+      renderDone?.();
+    }, [renderDone]);
+
+    const toggleMode = () => {
+      setMode((prevMode) => !prevMode);
     };
-    context.watch("topics");
 
-    context.advertise?.(currentTopic, "sensor_msgs/Joy");
+    useEffect(() => {
+      if (drone_mode) {
+        document.getElementById('nipple_zone')!.style.display = "none";
+        document.getElementById('nipple_zone_left')!.style.display = "block";
+        document.getElementById('nipple_zone_right')!.style.display = "block";
+        left_axis = 4;
+      } else {
+        document.getElementById('nipple_zone')!.style.display = "block";
+        document.getElementById('nipple_zone_left')!.style.display = "none";
+        document.getElementById('nipple_zone_right')!.style.display = "none";
+        left_axis = 3;
+      }
 
-    context.watch("colorScheme");
+    }, [drone_mode, colorScheme]);
 
-    if (CURRENT_SCHEME === '') {
-      CURRENT_SCHEME = colorScheme
-    }
-    init_left_nipple(CURRENT_SCHEME);
-    init_right_nipple(CURRENT_SCHEME);
+  const toggleStyle: CSSProperties = {
+    position: "relative",
+    right: "10px",
+    width: "50px",
+    height: "24px",
+    backgroundColor: drone_mode ? "#00FF00" : (CURRENT_SCHEME === 'light' ? "#929293" : "#a2a2a4"),
+    borderRadius : "99px",
+    cursor: "pointer",
+  };
 
-
-  }, [context]);
-  useEffect(() => {
-    renderDone?.();
-  }, [renderDone]);
+  const thumbStyle: CSSProperties = {
+    position: "absolute",
+    top: "0px",
+    left: drone_mode ? "26px" : "0px",
+    width: "20px",
+    height: "20px",
+    backgroundColor: CURRENT_SCHEME === 'light' ? "#616161" : "#FFFFFF",
+    borderRadius: "50%",
+    transition: "transform 0.3s",
+  };
 
   return (
     <Gamepad
       onConnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} connected`)}
       onDisconnect={(gamepadIndex) => console.log(`Gamepad ${gamepadIndex} disconnected`)}
-      onButtonChange={(buttonName) => handleGamepadButtonDown(buttonName)}
+      onButtonDown={(buttonName) => handleGamepadButtonDown(buttonName)}
       onAxisChange={(axisName, value) => handleGamepadAxisChange(axisName, value)}
       deadZone={0.2}
     >{
       <div style={{ padding: "1rem" }}>
         {/* <h2>nipple test</h2> */}
 
+        <div style={joyStyles.switch}>
+          <button 
+            style={toggleStyle}
+            onClick={toggleMode}>
+            <div style={thumbStyle}></div>
+          </button>
+        </div>
+
+        <div id="nipple_zone"></div>
         <div id="nipple_zone_left"></div>
         <div id="nipple_zone_right"></div>
 
@@ -342,7 +448,7 @@ function CogniPilotJoyPanel({ context }: { context: PanelExtensionContext }): JS
               joyButtons[2]=1;
               pubCount=0;
             }}
-          >Auto Level</button>
+          >{drone_mode ? "Auto Level" : "CMD_VEL"}</button>
           <button 
             style={{...joyStyles.button, ...joyStyles.yellow}}
             onClick={() => {
